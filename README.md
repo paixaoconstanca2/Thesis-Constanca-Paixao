@@ -57,4 +57,4 @@ The analysis was conducted in Python using packages including:
 
 Constança Paixão
 
-Master's Thesis, 2026
+August, 2026
