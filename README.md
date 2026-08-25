@@ -30,7 +30,7 @@ The repository contains code for:
 The empirical analysis uses two datasets:
 
 - 167 validated Enterprise AI patents
-- 101 Enterprise AI startups
+- 91 Enterprise AI startups
 
 The underlying datasets are not included in this repository.
 
