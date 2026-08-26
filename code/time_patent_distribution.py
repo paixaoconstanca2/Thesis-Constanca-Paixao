@@ -1,14 +1,30 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load Excel
-file_path = "/Users/constancapaixao/Desktop/TESE/data/lens export 3 - clean.xlsx"
-df = pd.read_excel(file_path, sheet_name="Enterprise AI Patents")
+from pathlib import Path
 
-# Ensure Year is numeric
+
+# 1. FILES
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+EXCEL_FILE = DATA_DIR / "lens_export_clean.xlsx"
+OUTPUT_FILE = OUTPUT_DIR / "patents_distribution_2015_2025.png"
+
+
+# 2. LOAD DATA
+df = pd.read_excel(
+    EXCEL_FILE,
+    sheet_name="Enterprise AI Patents"
+)
+
+# 3.ENSURE YEAR IS NUMERIC
 df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
 
-# Count patents per year
+#4. COUNT PATENTS PER YEAR
 years = list(range(2015, 2026))
 
 year_counts = (
@@ -18,17 +34,17 @@ year_counts = (
     .sort_index()
 )
 
-# Plot
+#5. PLOT
 plt.figure(figsize=(12, 6))
 
-# Bars
+#6. BARS
 plt.bar(
     year_counts.index,
     year_counts.values,
     color="#2f6fa7"
 )
 
-# Value labels
+#7. VALUE LABELS 
 offset = max(year_counts.values) * 0.025
 
 for x, y in zip(year_counts.index, year_counts.values):
@@ -41,36 +57,37 @@ for x, y in zip(year_counts.index, year_counts.values):
         fontsize=13,
         fontweight="bold"
     )
-# Title
+    
+#8. TITLE
 plt.title(
     "Enterprise AI Patent Distribution by Year\nNetherlands · 2015–2025",
     fontsize=16,
     fontweight="bold"
 )
 
-# Axis labels
+#9. AXIS LABEL
 plt.xlabel("Publication Year", fontsize=12)
 plt.ylabel("Number of Patents", fontsize=12)
 
 plt.xticks(years, fontsize=11)
 plt.yticks(fontsize=11)
 
-# Add space above the highest bar
+#10. ADD SPCE ABOVE HIGHEST BAR
 plt.ylim(0, max(year_counts.values) + 5)
 
-# Grid
+#11. GRID
 plt.grid(
     axis="y",
     linestyle="--",
     alpha=0.4
 )
 
-# Keep grid behind bars
+#12. GRIDE BEHIND BARS
 plt.gca().set_axisbelow(True)
 
 plt.tight_layout()
 
-# Save high-resolution figure
+#13. FIGURE
 plt.savefig(
     "../patents_distribution_2015_2025.png",
     dpi=300,
