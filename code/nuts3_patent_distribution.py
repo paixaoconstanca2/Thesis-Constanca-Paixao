@@ -2,31 +2,34 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-import os
+from pathlib import Path
 
-# ============================================================
-# 1. FILES
-# ============================================================
 
-SHAPEFILE = "/Users/constancapaixao/Desktop/TESE/data/NUTS_RG_01M_2024_4326/NUTS_RG_01M_2024_4326.shp"
+# 1. FILE PATHS
 
-EXCEL_FILE = "/Users/constancapaixao/Desktop/TESE/data/Mapa regional.xlsx"
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+SHAPEFILE = (
+    DATA_DIR
+    / "NUTS_RG_01M_2024_4326"
+    / "NUTS_RG_01M_2024_4326.shp"
+)
+
+EXCEL_FILE = DATA_DIR / "Mapa regional.xlsx"
 
 SHEET_NAME = "NUTs3"
 
+OUTPUT_FILE = OUTPUT_DIR / "Patents_Count_NUTS3_classes.png"
 
-# ============================================================
 # 2. CHECK FILES
-# ============================================================
+print("Shapefile exists:", SHAPEFILE.exists())
+print("Excel exists:", EXCEL_FILE.exists())
 
-print("Shapefile exists:", os.path.exists(SHAPEFILE))
-print("Excel exists:", os.path.exists(EXCEL_FILE))
-
-
-# ============================================================
 # 3. LOAD NUTS 2024 GEOGRAPHICAL DATA
-# ============================================================
-
 nuts = gpd.read_file(SHAPEFILE)
 
 nl_nuts3 = nuts[
@@ -34,11 +37,7 @@ nl_nuts3 = nuts[
     (nuts["LEVL_CODE"] == 3)
 ].copy()
 
-
-# ============================================================
 # 4. LOAD PATENT DATA
-# ============================================================
-
 regional_data = pd.read_excel(
     EXCEL_FILE,
     sheet_name=SHEET_NAME
@@ -55,11 +54,7 @@ regional_data["Patents"] = pd.to_numeric(
     errors="coerce"
 )
 
-
-# ============================================================
 # 5. MERGE GEOGRAPHY + DATA
-# ============================================================
-
 map_data = nl_nuts3.merge(
     regional_data[["NUTS_ID", "Patents"]],
     on="NUTS_ID",
@@ -69,11 +64,7 @@ map_data = nl_nuts3.merge(
 # Regions not present in Excel = 0 patents
 map_data["Patents"] = map_data["Patents"].fillna(0)
 
-
-# ============================================================
 # 6. CLASSIFY PATENT COUNTS
-# ============================================================
-
 def classify_patents(value):
 
     if value == 0:
@@ -99,11 +90,7 @@ map_data["Patent_category"] = map_data["Patents"].apply(
     classify_patents
 )
 
-
-# ============================================================
 # 7. COLORS
-# ============================================================
-
 colors = {
     "0": "#FFFFFF",
     "1–2": "#DCEAF5",
@@ -113,10 +100,7 @@ colors = {
     ">20": "#2F6FA7"
 }
 
-# ============================================================
 # 8. CHECK CLASSIFICATION
-# ============================================================
-
 print("\nPatent classification:")
 
 print(
@@ -133,19 +117,12 @@ print(
 )
 
 
-# ============================================================
 # 9. CREATE MAP
-# ============================================================
-
 fig, ax = plt.subplots(
     figsize=(8, 10)
 )
 
-
-# ============================================================
 # 10. PLOT EACH CLASS
-# ============================================================
-
 category_order = [
     "0",
     "1–2",
@@ -172,10 +149,7 @@ for category in category_order:
     )
 
 
-# ============================================================
 # 11. DRAW REGIONAL BOUNDARIES
-# ============================================================
-
 map_data.boundary.plot(
     ax=ax,
     color="white",
@@ -183,10 +157,7 @@ map_data.boundary.plot(
 )
 
 
-# ============================================================
 # 12. TITLES
-# ============================================================
-
 fig.suptitle(
     "Enterprise AI Patents by NUTS 3 Region",
     fontsize=16,
@@ -201,17 +172,10 @@ ax.set_title(
 )
 
 
-# ============================================================
 # 13. REMOVE AXES
-# ============================================================
-
 ax.axis("off")
 
-
-# ============================================================
 # 14. LEGEND
-# ============================================================
-
 legend_elements = [
     Patch(
         facecolor=colors["0"],
@@ -255,21 +219,16 @@ ax.legend(
 )
 
 
-# ============================================================
-# 15. LAYOUT
-# ============================================================
 
+# 15. LAYOUT
 plt.tight_layout(
     rect=[0, 0, 1, 0.93]
 )
 
 
-# ============================================================
 # 16. SAVE MAP
-# ============================================================
-
 plt.savefig(
-    "/Users/constancapaixao/Desktop/TESE/data/Patents_Count_NUTS3_classes.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
