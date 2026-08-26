@@ -3,29 +3,37 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 from matplotlib.patches import Patch
-import os
-# ============================================================
+from pathlib import Path
+
 # 1. FILES
-# ============================================================
+# Repository root
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-SHAPEFILE = "/Users/constancapaixao/Desktop/TESE/data/NUTS_RG_01M_2024_4326/NUTS_RG_01M_2024_4326.shp"
+# Input data
+DATA_DIR = BASE_DIR / "data"
 
-EXCEL_FILE = "/Users/constancapaixao/Desktop/TESE/data/Mapa regional.xlsx"
+SHAPEFILE = (
+    DATA_DIR
+    / "NUTS_RG_01M_2024_4326"
+    / "NUTS_RG_01M_2024_4326.shp"
+)
+
+EXCEL_FILE = DATA_DIR / "Mapa regional.xlsx"
 
 SHEET_NAME = "NUTs3"
 
+# Output directory
+OUTPUT_DIR = BASE_DIR / "outputs"
+OUTPUT_DIR.mkdir(exist_ok=True)
 
-# ============================================================
+OUTPUT_FILE = OUTPUT_DIR / "LQ_NUTS3_continuous.png"
+
 # 2. CHECK FILES
-# ============================================================
-
-print("Shapefile exists:", os.path.exists(SHAPEFILE))
-print("Excel exists:", os.path.exists(EXCEL_FILE))
+print("Shapefile exists:", SHAPEFILE.exists())
+print("Excel exists:", EXCEL_FILE.exists())
 
 
-# ============================================================
 # 3. LOAD NUTS 2024 GEOGRAPHICAL DATA
-# ============================================================
 
 nuts = gpd.read_file(SHAPEFILE)
 
@@ -34,11 +42,7 @@ nl_nuts3 = nuts[
     (nuts["LEVL_CODE"] == 3)
 ].copy()
 
-
-# ============================================================
 # 4. LOAD REGIONAL DATA
-# ============================================================
-
 lq = pd.read_excel(
     EXCEL_FILE,
     sheet_name=SHEET_NAME
@@ -65,11 +69,7 @@ lq["LQ"] = pd.to_numeric(
     errors="coerce"
 )
 
-
-# ============================================================
 # 5. CORRECT LQ = 0 CASES
-# ============================================================
-
 # Patents exist but startups = 0
 # -> LQ = 0 according to the methodology used
 
@@ -79,11 +79,7 @@ lq.loc[
     "LQ"
 ] = 0
 
-
-# ============================================================
 # 6. MERGE GEOGRAPHY + DATA
-# ============================================================
-
 map_data = nl_nuts3.merge(
     lq,
     on="NUTS_ID",
@@ -94,10 +90,7 @@ map_data["Patents"] = map_data["Patents"].fillna(0)
 map_data["Startups"] = map_data["Startups"].fillna(0)
 
 
-# ============================================================
 # 7. IDENTIFY SPECIAL CASES
-# ============================================================
-
 # No observations in either dataset
 no_observations = map_data[
     (map_data["Patents"] == 0) &
@@ -119,11 +112,7 @@ valid_lq = map_data[
     )
 ].copy()
 
-
-# ============================================================
 # 8. CHECK VALUES
-# ============================================================
-
 print("\nValid LQ values:")
 
 print(
@@ -143,10 +132,7 @@ print(
 print("\nMinimum LQ:", valid_lq["LQ"].min())
 print("Maximum LQ:", valid_lq["LQ"].max())
 
-
-# ============================================================
-# 9. CREATE CUSTOM DIVERGING COLOUR MAP
-# ============================================================
+# 9. CREATE DIVERGING COLOUR MAP
 
 # Patent-oriented -> Balanced -> Startup-oriented
 
@@ -163,10 +149,7 @@ cmap = LinearSegmentedColormap.from_list(
 )
 
 
-# ============================================================
 # 10. NORMALISE AROUND LQ = 1
-# ============================================================
-
 # vcenter = 1 because LQ = 1 indicates equal relative orientation
 
 norm = TwoSlopeNorm(
@@ -176,18 +159,14 @@ norm = TwoSlopeNorm(
 )
 
 
-# ============================================================
 # 11. CREATE MAP
-# ============================================================
+
 
 fig, ax = plt.subplots(
     figsize=(8, 10)
 )
 
-
-# ============================================================
 # 12. PLOT VALID LQ REGIONS
-# ============================================================
 
 valid_lq.plot(
     column="LQ",
@@ -198,10 +177,7 @@ valid_lq.plot(
     linewidth=0.7
 )
 
-
-# ============================================================
 # 13. PLOT UNDEFINED REGIONS
-# ============================================================
 
 if not undefined.empty:
 
@@ -213,9 +189,7 @@ if not undefined.empty:
     )
 
 
-# ============================================================
 # 14. PLOT NO OBSERVATION REGIONS
-# ============================================================
 
 if not no_observations.empty:
 
@@ -226,10 +200,7 @@ if not no_observations.empty:
         linewidth=0.7
     )
 
-
-# ============================================================
 # 15. DRAW REGIONAL BOUNDARIES
-# ============================================================
 
 map_data.boundary.plot(
     ax=ax,
@@ -238,10 +209,8 @@ map_data.boundary.plot(
 )
 
 
-# ============================================================
-# 16. TITLES
-# ============================================================
 
+# 16. TITLES
 fig.suptitle(
     "Relative Orientation of Enterprise AI Activity",
     fontsize=16,
@@ -260,16 +229,11 @@ fig.text(
     fontsize=12
 )
 
-# ============================================================
 # 17. REMOVE AXES
-# ============================================================
 
 ax.axis("off")
 
-# ============================================================
 # 18. CONTINUOUS COLOUR BAR
-# ============================================================
-
 sm = plt.cm.ScalarMappable(
     cmap=cmap,
     norm=norm
@@ -304,10 +268,7 @@ cbar.ax.tick_params(
     labelsize=9
 )
 
-
-# ============================================================
 # 19. ADD SIMPLE ORIENTATION LABELS
-# ============================================================
 
 # Label above the colour bar
 cbar.ax.text(
@@ -334,9 +295,9 @@ cbar.ax.text(
 )
 
 
-# ============================================================
+
 # 20. SPECIAL CASE LEGEND
-# ============================================================
+
 
 special_legend = [
     Patch(
@@ -361,21 +322,18 @@ ax.legend(
 )
 
 
-# ============================================================
+
 # 21. LAYOUT
-# ============================================================
+
 
 plt.tight_layout(
     rect=[0, 0.02, 0.94, 0.93]
 )
 
-
-# ============================================================
 # 22. SAVE
-# ============================================================
 
 plt.savefig(
-    "/Users/constancapaixao/Desktop/TESE/data/LQ_NUTS3_continuous.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
