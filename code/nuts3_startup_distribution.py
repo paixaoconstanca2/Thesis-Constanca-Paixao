@@ -2,31 +2,35 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-import os
+from pathlib import Path
 
-# ============================================================
-# 1. FILES
-# ============================================================
 
-SHAPEFILE = "/Users/constancapaixao/Desktop/TESE/data/NUTS_RG_01M_2024_4326/NUTS_RG_01M_2024_4326.shp"
+# 1. FILE PATHS
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
 
-EXCEL_FILE = "/Users/constancapaixao/Desktop/TESE/data/Mapa regional.xlsx"
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+SHAPEFILE = (
+    DATA_DIR
+    / "NUTS_RG_01M_2024_4326"
+    / "NUTS_RG_01M_2024_4326.shp"
+)
+
+EXCEL_FILE = DATA_DIR / "Mapa regional.xlsx"
 
 SHEET_NAME = "NUTs3"
 
+OUTPUT_FILE = OUTPUT_DIR / "Startups_Count_NUTS3_classes.png"
 
-# ============================================================
 # 2. CHECK FILES
-# ============================================================
-
-print("Shapefile exists:", os.path.exists(SHAPEFILE))
-print("Excel exists:", os.path.exists(EXCEL_FILE))
+print("Shapefile exists:", SHAPEFILE.exists())
+print("Excel exists:", EXCEL_FILE.exists())
 
 
-# ============================================================
+
 # 3. LOAD NUTS 2024 GEOGRAPHICAL DATA
-# ============================================================
-
 nuts = gpd.read_file(SHAPEFILE)
 
 nl_nuts3 = nuts[
@@ -35,10 +39,7 @@ nl_nuts3 = nuts[
 ].copy()
 
 
-# ============================================================
 # 4. LOAD STARTUP DATA
-# ============================================================
-
 regional_data = pd.read_excel(
     EXCEL_FILE,
     sheet_name=SHEET_NAME
@@ -56,10 +57,7 @@ regional_data["Startups"] = pd.to_numeric(
 )
 
 
-# ============================================================
 # 5. MERGE GEOGRAPHY + DATA
-# ============================================================
-
 map_data = nl_nuts3.merge(
     regional_data[["NUTS_ID", "Startups"]],
     on="NUTS_ID",
@@ -70,10 +68,7 @@ map_data = nl_nuts3.merge(
 map_data["Startups"] = map_data["Startups"].fillna(0)
 
 
-# ============================================================
 # 6. CLASSIFY STARTUP COUNTS
-# ============================================================
-
 def classify_startups(value):
 
     if value == 0:
@@ -100,10 +95,8 @@ map_data["Startup_category"] = map_data["Startups"].apply(
 )
 
 
-# ============================================================
-# 7. COLORS
-# ============================================================
 
+# 7. COLOURS
 colors = {
     "0": "#FFFFFF",
     "1–2": "#EEE8F0",
@@ -114,10 +107,7 @@ colors = {
 }
 
 
-# ============================================================
 # 8. CHECK CLASSIFICATION
-# ============================================================
-
 print("\nStartup classification:")
 
 print(
@@ -134,19 +124,13 @@ print(
 )
 
 
-# ============================================================
 # 9. CREATE MAP
-# ============================================================
-
 fig, ax = plt.subplots(
     figsize=(8, 10)
 )
 
 
-# ============================================================
 # 10. PLOT EACH CLASS
-# ============================================================
-
 category_order = [
     "0",
     "1–2",
@@ -173,10 +157,8 @@ for category in category_order:
     )
 
 
-# ============================================================
-# 11. DRAW REGIONAL BOUNDARIES
-# ============================================================
 
+# 11. DRAW REGIONAL BOUNDARIES
 map_data.boundary.plot(
     ax=ax,
     color="white",
@@ -184,10 +166,7 @@ map_data.boundary.plot(
 )
 
 
-# ============================================================
 # 12. TITLES
-# ============================================================
-
 fig.suptitle(
     "Enterprise AI Startups by NUTS 3 Region",
     fontsize=16,
@@ -202,17 +181,11 @@ ax.set_title(
 )
 
 
-# ============================================================
 # 13. REMOVE AXES
-# ============================================================
-
 ax.axis("off")
 
 
-# ============================================================
 # 14. LEGEND
-# ============================================================
-
 legend_elements = [
     Patch(
         facecolor=colors["0"],
@@ -257,21 +230,15 @@ ax.legend(
 )
 
 
-# ============================================================
 # 15. LAYOUT
-# ============================================================
-
 plt.tight_layout(
     rect=[0, 0, 1, 0.93]
 )
 
 
-# ============================================================
 # 16. SAVE
-# ============================================================
-
 plt.savefig(
-    "/Users/constancapaixao/Desktop/TESE/data/Startups_Count_NUTS3_classes.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
