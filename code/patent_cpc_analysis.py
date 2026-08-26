@@ -1,47 +1,25 @@
-"""
-Technological Composition — Dutch Enterprise AI Patents
-
-Reads the patent dataset, classifies CPC codes into the technological
-categories used in the thesis, and counts each PATENT a maximum of
-ONE time per technological category.
-
-This means:
-- one patent can belong to multiple technological categories;
-- repeated CPC codes from the same category count only once per patent;
-- different patents from the same company are counted separately.
-"""
-
-import pandas as pd
-from collections import Counter
-import matplotlib.pyplot as plt
-
-
-
-"""
-Technological Composition — Dutch Enterprise AI Patents
-
-Reads the patent dataset, classifies CPC codes into the technological
-categories used in the thesis, and counts each patent a maximum of
-one time per technological category.
-"""
-
 import pandas as pd
 from collections import Counter
 import matplotlib.pyplot as plt
 import re
 
 
-# ============================================================
-# 1. CONFIG
-# ============================================================
+# 1. FILES
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
 
-FICHEIRO = "/Users/constancapaixao/Desktop/TESE/data/lens export 3 - clean.xlsx"
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+EXCEL_FILE = DATA_DIR / "lens_export_clean.xlsx"
+
+OUTPUT_TABLE = OUTPUT_DIR / "Patent_Technological_Composition.xlsx"
+OUTPUT_FIGURE = OUTPUT_DIR / "technological_composition_patents_final.png"
 
 CPC_COL = "CPC Codes"
-# ============================================================
-# 2. TECHNOLOGICAL CATEGORY MAP
-# ============================================================
 
+
+# 2. TECHNOLOGICAL CATEGORY MAP
 CATEGORY_MAP = [
     ("G06N3",  "Neural Networks / Deep Learning"),
     ("G06N20", "Machine Learning"),
@@ -63,10 +41,8 @@ CATEGORY_MAP.sort(
 )
 
 
-# ============================================================
-# 3. CLASSIFICATION FUNCTION
-# ============================================================
 
+# 3. CLASSIFICATION FUNCTION
 def classify_cpc(code):
 
     if pd.isna(code):
@@ -82,22 +58,14 @@ def classify_cpc(code):
     return None
 
 
-# ============================================================
 # 4. READ DATASET
-# ============================================================
-
 df = pd.read_excel(
-    FICHEIRO,
+    EXCEL_FILE,
     usecols=[CPC_COL]
 )
 
-df[CPC_COL] = df[CPC_COL].fillna("")
 
-
-# ============================================================
 # 5. CLASSIFY EACH PATENT
-# ============================================================
-
 patent_categories = []
 
 for index, row in df.iterrows():
@@ -133,10 +101,7 @@ for index, row in df.iterrows():
     )
 
 
-# ============================================================
 # 6. COUNT UNIQUE PATENTS PER CATEGORY
-# ============================================================
-
 category_counter = Counter()
 
 for categories in patent_categories:
@@ -145,10 +110,7 @@ for categories in patent_categories:
         category_counter[category] += 1
 
 
-# ============================================================
 # 7. PRINT RESULTS
-# ============================================================
-
 print("\n==============================================")
 print("NUMBER OF PATENTS PER TECHNOLOGICAL CATEGORY")
 print("==============================================\n")
@@ -169,10 +131,7 @@ print("\nPATENTS WITH AT LEAST ONE MATCHED CATEGORY:")
 print(matched_patents)
 
 
-# ============================================================
-# 8. CREATE OUTPUT TABLE
-# ============================================================
-
+# 8. CREATE TABLE
 topic_counts = pd.DataFrame(
     category_counter.most_common(),
     columns=[
@@ -182,25 +141,18 @@ topic_counts = pd.DataFrame(
 )
 
 topic_counts.to_excel(
-    "Patent_Technological_Composition.xlsx",
+    OUTPUT_TABLE,
     index=False
 )
 
-
-# ============================================================
 # 9. PREPARE GRAPH
-# ============================================================
-
 plot_data = topic_counts.sort_values(
     "Number of Patents",
     ascending=True
 )
 
 
-# ============================================================
-# 10. CREATE FIGURE
-# ============================================================
-
+# 10.  FIGURE
 fig, ax = plt.subplots(figsize=(10, 6))
 
 bars = ax.barh(
@@ -213,10 +165,7 @@ bars = ax.barh(
 )
 
 
-# ============================================================
 # 11. ADD VALUES
-# ============================================================
-
 max_val = plot_data["Number of Patents"].max()
 
 for bar in bars:
@@ -237,10 +186,7 @@ for bar in bars:
     )
 
 
-# ============================================================
 # 12. TITLE AND AXES
-# ============================================================
-
 ax.set_title(
     "Enterprise AI Patents by Technological Category\n"
     "Netherlands · 2015–2025",
@@ -263,10 +209,7 @@ ax.set_ylabel(
 )
 
 
-# ============================================================
 # 13. FORMATTING
-# ============================================================
-
 ax.tick_params(
     axis="both",
     labelsize=10
@@ -290,14 +233,11 @@ ax.set_xlim(
 )
 
 
-# ============================================================
 # 14. SAVE
-# ============================================================
-
 plt.tight_layout()
 
 plt.savefig(
-    "../technological_composition_patents_final.png",
+    OUTPUT_FIGURE,
     dpi=300,
     bbox_inches="tight"
 )
