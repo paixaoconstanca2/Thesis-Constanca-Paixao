@@ -2,34 +2,40 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-import os
+from pathlib import Path
 
-SHAPEFILE = "/Users/constancapaixao/Desktop/TESE/data/NUTS_RG_01M_2024_4326/NUTS_RG_01M_2024_4326.shp"
-EXCEL_FILE = (
-    "/Users/constancapaixao/Desktop/TESE/data/Mapa regional.xlsx"
+
+#1. FILE PATHS
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+SHAPEFILE = (
+    DATA_DIR
+    / "NUTS_RG_01M_2024_4326"
+    / "NUTS_RG_01M_2024_4326.shp"
 )
+
+EXCEL_FILE = DATA_DIR / "Mapa regional.xlsx"
 
 SHEET_NAME = "NUTs2"
 
+OUTPUT_FILE = OUTPUT_DIR / "LQ_NUTS2_Enterprise_AI.png"
 
-# ---------------------------------------------------------
-# CHECK FILES
-# ---------------------------------------------------------
+#2. CHECK FILES
 
-print("Shapefile exists:", os.path.exists(SHAPEFILE))
-print("Excel exists:", os.path.exists(EXCEL_FILE))
+print("Shapefile exists:", SHAPEFILE.exists())
+print("Excel exists:", EXCEL_FILE.exists())
 
-
-# ---------------------------------------------------------
-# LOAD NUTS 2024 GEOGRAPHICAL DATA
-# ---------------------------------------------------------
+# 3.LOAD NUTS 2024 GEOGRAPHICAL DATA
 
 nuts = gpd.read_file(SHAPEFILE)
 
-
-# ---------------------------------------------------------
-# FILTER NETHERLANDS + NUTS 2
-# ---------------------------------------------------------
+# 4.FILTER NETHERLANDS + NUTS 2
 
 nl_nuts2 = nuts[
     (nuts["CNTR_CODE"] == "NL") &
@@ -44,10 +50,7 @@ print(
     ].sort_values("NUTS_ID")
 )
 
-
-# ---------------------------------------------------------
-# LOAD LQ DATA FROM EXCEL
-# ---------------------------------------------------------
+#5. LOAD LQ DATA FROM EXCEL
 
 lq = pd.read_excel(
     EXCEL_FILE,
@@ -55,9 +58,8 @@ lq = pd.read_excel(
 )
 
 
-# ---------------------------------------------------------
-# RENAME EXCEL COLUMN
-# ---------------------------------------------------------
+#6. RENAME EXCEL COLUMN
+
 
 lq = lq.rename(
     columns={
@@ -66,9 +68,7 @@ lq = lq.rename(
 )
 
 
-# ---------------------------------------------------------
-# MAKE SURE LQ IS NUMERIC
-# ---------------------------------------------------------
+#7. MAKE SURE LQ IS NUMERIC
 
 lq["LQ"] = pd.to_numeric(
     lq["LQ"],
@@ -79,10 +79,7 @@ lq["LQ"] = pd.to_numeric(
 print("\nLQ data:")
 print(lq)
 
-
-# ---------------------------------------------------------
-# MERGE GEOGRAPHY + LQ DATA
-# ---------------------------------------------------------
+#8. MERGE GEOGRAPHY + LQ DATA
 
 map_data = nl_nuts2.merge(
     lq,
@@ -99,9 +96,7 @@ print(
 )
 
 
-# ---------------------------------------------------------
-# CLASSIFY LQ VALUES
-# ---------------------------------------------------------
+#9. CLASSIFY LQ VALUES
 
 def classify_lq(value):
 
@@ -131,9 +126,8 @@ print(
 )
 
 
-# ---------------------------------------------------------
-# COLORS
-# ---------------------------------------------------------
+#10. COLORS
+
 
 colors = {
     "Patent-oriented": "#3B6478",
@@ -143,9 +137,8 @@ colors = {
 }
 
 
-# ---------------------------------------------------------
-# CREATE MAP
-# ---------------------------------------------------------
+
+#11. CREATE MAP
 
 fig, ax = plt.subplots(
     figsize=(7, 9)
@@ -166,9 +159,8 @@ for category, color in colors.items():
     )
 
 
-# ---------------------------------------------------------
-# TITLE
-# ---------------------------------------------------------
+#12. TITLE
+
 
 fig.suptitle(
     "Relative Orientation of Enterprise AI Activity",
@@ -182,16 +174,12 @@ ax.set_title(
     fontsize=12,
     pad=10
 )
-# ---------------------------------------------------------
-# REMOVE AXES
-# ---------------------------------------------------------
+
+# 13.REMOVE AXES
 
 ax.axis("off")
 
-
-# ---------------------------------------------------------
-# LEGEND
-# ---------------------------------------------------------
+# 14. LEGEND
 
 legend_elements = [
 
@@ -229,16 +217,14 @@ ax.legend(
 )
 
 
-# ---------------------------------------------------------
-# FINAL LAYOUT
-# ---------------------------------------------------------
+
+# 15. FINAL LAYOUT
 
 plt.tight_layout(rect=[0, 0, 1, 0.93])
 
 
-# ---------------------------------------------------------
-# SAVE FIGURE
-# ---------------------------------------------------------
+
+#16. SAVE FIGURE
 
 OUTPUT_FILE = (
     "/Users/constancapaixao/Desktop/TESE/data/"
@@ -255,9 +241,6 @@ plt.savefig(
 print("\nMap saved to:")
 print(OUTPUT_FILE)
 
-
-# ---------------------------------------------------------
-# SHOW FIGURE
-# ---------------------------------------------------------
+# 17.SHOW FIGURE
 
 plt.show()
