@@ -2,25 +2,28 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 
-# ============================================================
-# 1. LOAD FINAL STARTUP DATASET
-# ============================================================
+from pathlib import Path
 
-FICHEIRO = "/Users/constancapaixao/Desktop/TESE/data/startups-combined-updated.xlsx"
+
+# 1. FILE PATHS AND LOAD DATA
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+EXCEL_FILE = DATA_DIR / "startups-combined-updated.xlsx"
+OUTPUT_FILE = OUTPUT_DIR / "startup_technological_composition_final.png"
 
 df = pd.read_excel(
-    FICHEIRO,
+    EXCEL_FILE,
     sheet_name="Combined Startups"
 )
 
 print("Total rows:", len(df))
 print("Unique startups:", df["Name / Applicant"].nunique())
 
-
-# ============================================================
 # 2. TECHNOLOGICAL CATEGORIES
-# ============================================================
-
 CATEGORIES = {
 
     "Business Process AI": ["G06Q10"],
@@ -39,10 +42,7 @@ CATEGORIES = {
 }
 
 
-# ============================================================
 # 3. CLEAN CPC CODES
-# ============================================================
-
 def clean_cpc_codes(value):
 
     if pd.isna(value):
@@ -64,10 +64,7 @@ def clean_cpc_codes(value):
 df["CPC_LIST"] = df["CPC Codes"].apply(clean_cpc_codes)
 
 
-# ============================================================
 # 4. CLASSIFY EACH STARTUP
-# ============================================================
-
 def classify_startup(cpc_list):
 
     categories_found = set()
@@ -85,10 +82,7 @@ def classify_startup(cpc_list):
 df["TECH_CATEGORIES"] = df["CPC_LIST"].apply(classify_startup)
 
 
-# ============================================================
 # 5. COUNT STARTUPS PER CATEGORY
-# ============================================================
-
 category_counts = {
     category: 0
     for category in CATEGORIES
@@ -123,20 +117,14 @@ print(
 )
 
 
-# ============================================================
 # 6. PREPARE GRAPH
-# ============================================================
-
 plot_df = results.sort_values(
     "Number of Startups",
     ascending=True
 )
 
 
-# ============================================================
 # 7. CREATE FIGURE
-# ============================================================
-
 fig, ax = plt.subplots(figsize=(10, 6))
 
 bars = ax.barh(
@@ -149,10 +137,7 @@ bars = ax.barh(
 )
 
 
-# ============================================================
 # 8. ADD VALUES
-# ============================================================
-
 max_val = plot_df["Number of Startups"].max()
 
 for bar, value in zip(
@@ -172,10 +157,7 @@ for bar, value in zip(
     )
 
 
-# ============================================================
 # 9. TITLE AND AXES
-# ============================================================
-
 ax.set_title(
     "Enterprise AI Startups by Technological Category\n"
     "Netherlands · 2015–2025",
@@ -198,10 +180,7 @@ ax.set_ylabel(
 )
 
 
-# ============================================================
-# 10. FORMATTING
-# ============================================================
-
+# 10. FORMAT
 ax.tick_params(
     axis="both",
     labelsize=10
@@ -225,14 +204,10 @@ ax.set_xlim(
 )
 
 
-# ============================================================
 # 11. SAVE
-# ============================================================
-
-plt.tight_layout()
 
 plt.savefig(
-    "../startup_technological_composition_final.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
