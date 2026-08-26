@@ -89,7 +89,7 @@ plt.tight_layout()
 
 #13. FIGURE
 plt.savefig(
-    "../patents_distribution_2015_2025.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
