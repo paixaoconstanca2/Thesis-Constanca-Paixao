@@ -1,25 +1,29 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ============================================================
-# 1. LOAD FINAL STARTUP DATASET
-# ============================================================
+from pathlib import Path
 
-FICHEIRO = "/Users/constancapaixao/Desktop/TESE/data/startups-combined-updated.xlsx"
+
+# 1. FILE PATHS AND LOAD DATA
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+EXCEL_FILE = DATA_DIR / "startups-combined-updated.xlsx"
+OUTPUT_FILE = OUTPUT_DIR / "startup_time_distribution_final.png"
 
 df = pd.read_excel(
-    FICHEIRO,
+    EXCEL_FILE,
     sheet_name="Combined Startups"
 )
 
-# Verificar os nomes das colunas
+# Check column names
 print(df.columns.tolist())
 
 
-# ============================================================
 # 2. DEFINE YEAR COLUMN
-# ============================================================
-
 YEAR_COL = "Founded / Patent Year"
 
 # Extrair um ano de 4 dígitos da célula
@@ -45,20 +49,14 @@ if not invalid_years.empty:
     print(invalid_years)
 
 
-# ============================================================
 # 3. KEEP ONLY 2015–2025
-# ============================================================
-
 df_period = df[
     (df["Founded Year Clean"] >= 2015) &
     (df["Founded Year Clean"] <= 2025)
 ].copy()
 
 
-# ============================================================
 # 4. COUNT STARTUPS BY YEAR
-# ============================================================
-
 years = list(range(2015, 2026))
 
 year_counts = (
@@ -74,10 +72,7 @@ print(year_counts)
 print("\nTotal startups represented:", int(year_counts.sum()))
 
 
-# ============================================================
 # 5. CREATE FIGURE
-# ============================================================
-
 fig, ax = plt.subplots(figsize=(12, 6))
 
 # Purple bars
@@ -90,10 +85,7 @@ bars = ax.bar(
 )
 
 
-# ============================================================
 # 6. ADD VALUES ABOVE BARS
-# ============================================================
-
 offset = max(year_counts.values) * 0.025
 
 for year, value in zip(year_counts.index, year_counts.values):
@@ -110,10 +102,7 @@ for year, value in zip(year_counts.index, year_counts.values):
     )
 
 
-# ============================================================
 # 7. TITLE AND AXES
-# ============================================================
-
 ax.set_title(
     "Enterprise AI Startup Distribution by Year\n"
     "Netherlands · 2015–2025",
@@ -141,10 +130,7 @@ ax.tick_params(
 )
 
 
-# ============================================================
 # 8. GRID AND FRAME
-# ============================================================
-
 ax.grid(
     axis="y",
     linestyle="--",
@@ -165,14 +151,11 @@ ax.set_ylim(
 )
 
 
-# ============================================================
 # 9. SAVE AND SHOW
-# ============================================================
-
 plt.tight_layout()
 
 plt.savefig(
-    "../startup_time_distribution_final.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
