@@ -1,14 +1,21 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
-# ============================================================
-# 1. LOAD FINAL STARTUP DATASET
-# ============================================================
 
-FICHEIRO = "/Users/constancapaixao/Desktop/TESE/data/startups-combined-updated.xlsx"
+# 1. FILE PATHS AND LOAD DATA
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+EXCEL_FILE = DATA_DIR / "startups-combined-updated.xlsx"
+OUTPUT_FILE = OUTPUT_DIR / "nuts2_startup_distribution_final.png"
 
 df = pd.read_excel(
-    FICHEIRO,
+    EXCEL_FILE,
     sheet_name="Combined Startups"
 )
 
@@ -19,9 +26,7 @@ print(df.columns.tolist())
 NUTS2_COL = "NUTS 2 Province"
 
 
-# ============================================================
 # 2. COUNT STARTUPS BY NUTS 2
-# ============================================================
 
 # Remove observations without NUTS 2 classification
 df_valid = df[df[NUTS2_COL].notna()].copy()
@@ -37,18 +42,13 @@ df_counts = (
     .reset_index(name="Count")
 )
 
-# ============================================================
 # 3. SORT
-# ============================================================
-
 df_counts = df_counts.sort_values(
     "Count",
     ascending=True
 )
 
-# ============================================================
-# 4. CREATE FIGURE
-# ============================================================
+# 4. FIGURE
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -60,9 +60,7 @@ bars = ax.barh(
     height=0.65
 )
 
-# ============================================================
 # 5. ADD VALUES
-# ============================================================
 
 for bar, val in zip(bars, df_counts["Count"]):
     ax.text(
@@ -75,9 +73,7 @@ for bar, val in zip(bars, df_counts["Count"]):
         fontweight="bold"
     )
 
-# ============================================================
 # 6. FORMATTING
-# ============================================================
 
 ax.set_title(
     "Enterprise AI Startup Distribution by NUTS 2 (Province)\n"
@@ -119,16 +115,15 @@ ax.grid(
 
 ax.spines[["top", "right"]].set_visible(False)
 
-# ============================================================
 # 7. SAVE
-# ============================================================
 
 plt.tight_layout()
 
 plt.savefig(
-    "../nuts2_startup_distribution_final.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
 
 plt.show()
+
