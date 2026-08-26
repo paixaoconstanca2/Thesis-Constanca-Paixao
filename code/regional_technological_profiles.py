@@ -3,22 +3,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 
-# ============================================================
+from pathlib import Path
+
+
 # 1. FILE PATHS
-# ============================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
 
-PATENT_FILE = "/Users/constancapaixao/Desktop/TESE/data/lens_with_nuts3.xlsx"
-STARTUP_FILE = "/Users/constancapaixao/Desktop/TESE/data/startups-combined-updated.xlsx"
+OUTPUT_DIR.mkdir(exist_ok=True)
 
-PATENT_SHEET = 0
+PATENT_FILE = DATA_DIR / "lens_with_nuts3.xlsx"
+STARTUP_FILE = DATA_DIR / "startups-combined-updated.xlsx"
+
+OUTPUT_FILE = OUTPUT_DIR / "regional_technological_profiles.png"
+
 STARTUP_SHEET = "Combined Startups"
 
-
-
-# ============================================================
 # 2. LOAD PATENT DATA
-# ============================================================
-
 # Main patent information
 patents_main = pd.read_excel(
     PATENT_FILE,
@@ -38,10 +40,7 @@ print("\nPATENT NUTS3 COLUMNS:")
 print(patents_nuts3.columns.tolist())
 
 
-# ============================================================
 # 3. MERGE PATENT CPC + NUTS 3 DATA
-# ============================================================
-
 patents = patents_main.merge(
     patents_nuts3[
         [
@@ -66,24 +65,19 @@ print(
 )
 
 
-# ============================================================
-# 4. LOAD STARTUP DATA
-# ============================================================
 
+# 4. LOAD STARTUP DATA
 startups = pd.read_excel(
     STARTUP_FILE,
-    sheet_name="Combined Startups"
+    sheet_name=STARTUP_SHEET
 )
 
 print("\nSTARTUP COLUMNS:")
 print(startups.columns.tolist())
 
 
-# ============================================================
-# 5. CLEAN STARTUP DATA
-# ============================================================
-
-# Remove blank rows
+# 5. CLEAN STARTUP DATA 
+#Remove blank rows
 startups = startups[
     startups["Name / Applicant"].notna()
 ].copy()
@@ -100,10 +94,7 @@ startups = startups[
 print("\nNumber of startups:", len(startups))
 
 
-# ============================================================
 # 6. COLUMN NAMES
-# ============================================================
-
 PATENT_NUTS3_COL = "NUTS 3 Sub-region"
 PATENT_CPC_COL = "CPC Codes"
 
@@ -111,10 +102,7 @@ STARTUP_NUTS3_COL = "NUTS 3 Sub-region"
 STARTUP_CPC_COL = "CPC Codes"
 
 
-# ============================================================
 # 7. TECHNOLOGICAL CATEGORIES
-# ============================================================
-
 CATEGORIES = {
 
     "Neural Networks /\nDeep Learning": [
@@ -147,10 +135,7 @@ CATEGORIES = {
 }
 
 
-# ============================================================
 # 8. REGIONS INCLUDED IN THE HEATMAP
-# ============================================================
-
 REGIONS = [
     "Zuidoost-Noord-Brabant",
     "Groot-Amsterdam",
@@ -160,10 +145,7 @@ REGIONS = [
 ]
 
 
-# ============================================================
 # 9. CLEAN CPC CODES
-# ============================================================
-
 def clean_cpc_codes(value):
 
     if pd.isna(value):
@@ -189,10 +171,7 @@ def clean_cpc_codes(value):
     return cleaned_codes
 
 
-# ============================================================
 # 10. CLASSIFY CPC CODES INTO TECHNOLOGICAL CATEGORIES
-# ============================================================
-
 def classify_categories(cpc_value):
 
     codes = clean_cpc_codes(cpc_value)
@@ -212,10 +191,7 @@ def classify_categories(cpc_value):
     return categories_found
 
 
-# ============================================================
 # 11. CREATE REGIONAL TECHNOLOGICAL MATRIX
-# ============================================================
-
 def create_matrix(df, region_col, cpc_col):
 
     df = df.copy()
@@ -280,10 +256,7 @@ def create_matrix(df, region_col, cpc_col):
     return matrix, regional_counts
 
 
-# ============================================================
 # 12. BUILD PATENT MATRIX
-# ============================================================
-
 patent_matrix, patent_counts = create_matrix(
     patents,
     PATENT_NUTS3_COL,
@@ -291,10 +264,7 @@ patent_matrix, patent_counts = create_matrix(
 )
 
 
-# ============================================================
 # 13. BUILD STARTUP MATRIX
-# ============================================================
-
 startup_matrix, startup_counts = create_matrix(
     startups,
     STARTUP_NUTS3_COL,
@@ -302,10 +272,7 @@ startup_matrix, startup_counts = create_matrix(
 )
 
 
-# ============================================================
 # 14. PRINT RESULTS FOR CONTROL
-# ============================================================
-
 print("\n===================================")
 print("PATENT REGIONAL COUNTS")
 print("===================================")
@@ -342,10 +309,7 @@ print(
 )
 
 
-# ============================================================
 # 15. REGION LABELS INCLUDING SAMPLE SIZE
-# ============================================================
-
 patent_labels = [
 
     f"{region} (n={patent_counts[region]})"
@@ -361,10 +325,7 @@ startup_labels = [
 ]
 
 
-# ============================================================
-# 16. CREATE FIGURE
-# ============================================================
-
+# 16. FIGURE
 fig, axes = plt.subplots(
     2,
     1,
@@ -372,18 +333,12 @@ fig, axes = plt.subplots(
 )
 
 
-# ============================================================
 # 17. COMMON COLOUR SCALE
-# ============================================================
-
 VMIN = 0
 VMAX = 75
 
 
-# ============================================================
 # 18. PATENT HEATMAP
-# ============================================================
-
 im1 = axes[0].imshow(
     patent_matrix.values.astype(float),
     cmap="Blues",
@@ -426,10 +381,7 @@ axes[0].set_yticklabels(
 )
 
 
-# ============================================================
 # 19. ADD PATENT PERCENTAGES TO CELLS
-# ============================================================
-
 for i in range(
     len(REGIONS)
 ):
@@ -473,10 +425,7 @@ for i in range(
         )
 
 
-# ============================================================
 # 20. STARTUP HEATMAP
-# ============================================================
-
 im2 = axes[1].imshow(
     startup_matrix.values.astype(float),
     cmap="Purples",
@@ -519,10 +468,7 @@ axes[1].set_yticklabels(
 )
 
 
-# ============================================================
 # 21. ADD STARTUP PERCENTAGES TO CELLS
-# ============================================================
-
 for i in range(
     len(REGIONS)
 ):
@@ -564,10 +510,7 @@ for i in range(
         )
 
 
-# ============================================================
 # 22. GRID BETWEEN CELLS
-# ============================================================
-
 for ax in axes:
 
     ax.set_xticks(
@@ -612,10 +555,7 @@ for ax in axes:
     )
 
 
-# ============================================================
 # 23. MAIN FIGURE TITLE
-# ============================================================
-
 fig.suptitle(
     "Technological Profiles of the Main Dutch Enterprise AI Regions\n"
     "Netherlands · 2015–2025",
@@ -625,10 +565,7 @@ fig.suptitle(
 )
 
 
-# ============================================================
 # 24. COLOUR BARS
-# ============================================================
-
 cbar1 = fig.colorbar(
     im1,
     ax=axes[0],
@@ -655,10 +592,7 @@ cbar2.set_label(
 )
 
 
-# ============================================================
 # 25. FINAL LAYOUT
-# ============================================================
-
 plt.subplots_adjust(
     left=0.22,
     right=0.92,
@@ -667,19 +601,11 @@ plt.subplots_adjust(
     hspace=0.28
 )
 
-# ============================================================
-# 26. SAVE FIGURE
-# ============================================================
-
+# 26. PLOT
 plt.savefig(
-    "../regional_technological_profiles.png",
+    OUTPUT_FILE,
     dpi=300,
     bbox_inches="tight"
 )
-
-
-# ============================================================
-# 27. SHOW FIGURE
-# ============================================================
 
 plt.show()
